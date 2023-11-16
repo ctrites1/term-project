@@ -72,10 +72,8 @@ async function readDir(dir) {
  */
 
 function grayScale(pathIn, pathOut) {
-  console.log(pathIn)
   let png = new PNG({});
   png.on("parsed", function () {
-    console.log('halp')
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         let i = (this.width * y + x) << 2;
@@ -98,9 +96,39 @@ function grayScale(pathIn, pathOut) {
   )
 }
 
+function sepia(pathIn, pathOut) {
+  let png = new PNG({});
+  png.on("parsed", function () {
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let i = (this.width * y + x) << 2;
+  
+        // change to sepia
+        let redAdj = Math.round(19 * 0.70 + 27 * 0.11);
+        let greenAdj = Math.round(redAdj - 19);
+        let blueAdj = Math.round(redAdj - 19 - 27);
+        let luminance = Math.round(0.3 * this.data[i] + 0.59 * this.data[i + 1] + 0.11 * this.data[i + 2]);
+
+        this.data[i] = Math.max(0, (Math.min((luminance + redAdj), 255))); // R value
+        this.data[i + 1] = Math.max(0, (Math.min((luminance + greenAdj), 255))); // G value
+        this.data[i + 2] = Math.max(0, (Math.min((luminance + blueAdj), 255))); // B value
+  
+      }
+    }
+    this.pack()
+  });
+
+  pipeline(
+    createReadStream(String(pathIn)),
+    png,
+    createWriteStream(pathOut)
+  )
+}
 
 module.exports = {
   unzip,
   readDir,
   grayScale,
+  sepia
 };
